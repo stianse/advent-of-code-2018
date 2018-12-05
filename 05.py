@@ -5,16 +5,11 @@ with open('05.txt') as f:
     inputs = f.read().strip()
 
 A = inputs
-T = {}
-
-for x, y in zip(string.ascii_lowercase, string.ascii_uppercase):
-    T[x] = y
-    T[y] = x
 
 def react(a):
     stack = []
     for c in a:
-        if stack and T[c] == stack[-1]:
+        if stack and c.swapcase() == stack[-1]:
             stack.pop()
         else:
             stack.append(c)
