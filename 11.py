@@ -7,24 +7,28 @@ SZ = 300
 
 xx, yy = np.meshgrid(range(1,1+SZ), range(1,1+SZ))
 rackid = xx + 10
-powlev = rackid * yy + SERIAL
-powlev *= rackid
-powlev //= 100
-powlev %= 10
-powlev -= 5
+powlev = (rackid * yy + SERIAL) * rackid
+powlev = (powlev // 100) % 10 - 5
 
-def print_5x5(a, x, y):
-    print(a[x-2:x+3,y-2:y+3])
+# Use a summed-area table
+area = powlev.cumsum(axis=0).cumsum(axis=1)
+# pad so that we don't need if-tests in loop
+area = np.pad(area, (1,0), 'constant')
 
 def max_power(square_size):
-    maxpowsz = SZ - square_size + 1
-    maxpow = np.zeros((maxpowsz, maxpowsz), dtype=int)
-    for y in range(maxpowsz):
-        for x in range(maxpowsz):
-            maxpow[y,x] = np.sum(powlev[y:y+square_size,x:x+square_size])
+    nsquares = SZ - square_size + 1
+    n = nsquares + 1 # compensate for padding
+    maxpow = np.zeros((n, n), dtype=int)
+    for y in range(1, n):
+        for x in range(1, n):
+            x0, y0 = x-1, y-1
+            x1, y1 = x+square_size-1, y+square_size-1
+            #maxpow[y,x] = np.sum(powlev[y0:y1,x0:x1])
+            maxpow[y,x] = area[y1, x1] + area[y0, x0] - area[y0, x1] - area[y1, x0]
+
     maxpos = np.unravel_index(np.argmax(maxpow), maxpow.shape)
     maxpowval = maxpow[maxpos]
-    return np.array(maxpos) + 1, maxpowval
+    return maxpos, maxpowval
 
 # Part 1
 pos, val = max_power(3)
